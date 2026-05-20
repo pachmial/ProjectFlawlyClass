@@ -1,64 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class LoginMurid extends StatefulWidget {
-  const LoginMurid({super.key});
+class DaftarMurid extends StatefulWidget {
+  const DaftarMurid({super.key});
 
   @override
-  State<LoginMurid> createState() => _LoginMuridState();
+  State<DaftarMurid> createState() => _DaftarMuridState();
 }
 
-class _LoginMuridState extends State<LoginMurid> {
+class _DaftarMuridState extends State<DaftarMurid> {
+  final _namaController = TextEditingController();
   final _nisnController = TextEditingController();
   final _sandiAkunController = TextEditingController();
+  final _konfirmasiSandiController = TextEditingController();
   final _sandiKelasController = TextEditingController();
+
   bool _isLoading = false;
   bool _obscureSandi = true;
+  bool _obscureKonfirmasi = true;
   bool _obscureSandiKelas = true;
 
-  Future<void> _login() async {
-    if (_nisnController.text.isEmpty ||
+  Future<void> _daftar() async {
+    if (_namaController.text.isEmpty ||
+        _nisnController.text.isEmpty ||
         _sandiAkunController.text.isEmpty ||
+        _konfirmasiSandiController.text.isEmpty ||
         _sandiKelasController.text.isEmpty) {
       _showSnackbar('Semua field harus diisi!', Colors.red);
+      return;
+    }
+
+    if (!RegExp(r'^\d+$').hasMatch(_nisnController.text.trim())) {
+      _showSnackbar('NISN hanya boleh berisi angka!', Colors.red);
+      return;
+    }
+
+    if (_sandiAkunController.text != _konfirmasiSandiController.text) {
+      _showSnackbar('Konfirmasi sandi tidak cocok!', Colors.red);
+      return;
+    }
+
+    if (_sandiAkunController.text.length < 6) {
+      _showSnackbar('Sandi minimal 6 karakter!', Colors.red);
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      final email = '${_nisnController.text.trim()}@flawlyclass.com';
+      final nisn = _nisnController.text.trim();
+      final email = '$nisn@flawlyclass.com';
 
-      // 1. Login ke Supabase Auth
-      final response = await Supabase.instance.client.auth.signInWithPassword(
+      // 1. Daftar ke Supabase Auth
+      final response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: _sandiAkunController.text.trim(),
       );
 
-      if (response.user == null) throw Exception('Login gagal');
+      if (response.user == null) throw Exception('Registrasi gagal');
 
-      // 2. Validasi sandi kelas dari tabel murid
-      final data = await Supabase.instance.client
-          .from('murid')
-          .select('sandi_kelas')
-          .eq('id', response.user!.id)
-          .single();
+      // 2. Simpan data ke tabel murid (termasuk nama)
+      await Supabase.instance.client.from('murid').insert({
+        'id': response.user!.id,
+        'nisn': nisn,
+        'nama': _namaController.text.trim(),
+        'sandi_kelas': _sandiKelasController.text.trim(),
+      });
 
-      if (data['sandi_kelas'] != _sandiKelasController.text.trim()) {
-        // Sandi kelas salah, logout lagi
-        await Supabase.instance.client.auth.signOut();
-        _showSnackbar('Sandi kelas salah!', Colors.red);
-        return;
-      }
-
-      // 3. Semua benar, masuk ke dashboard
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/dashboard-murid');
+        _showSnackbar('Akun berhasil dibuat! Silakan masuk.', Colors.green);
+        Navigator.pushReplacementNamed(context, '/login-murid');
       }
     } on AuthException catch (e) {
       _showSnackbar(e.message, Colors.red);
     } catch (e) {
-      if (mounted) _showSnackbar('NISN atau sandi salah!', Colors.red);
+      _showSnackbar('Terjadi kesalahan. Coba lagi.', Colors.red);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -102,7 +118,7 @@ class _LoginMuridState extends State<LoginMurid> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const Text(
-                      'Masuk',
+                      'Daftar',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 22,
@@ -111,83 +127,61 @@ class _LoginMuridState extends State<LoginMurid> {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Masuk ke akun kamu',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
+                      'Buat akun murid baru',
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                     const SizedBox(height: 20),
+
+                    // Nama Lengkap
+                    _buildTextField(
+                      controller: _namaController,
+                      hint: 'Nama lengkap',
+                    ),
+                    const SizedBox(height: 12),
+
                     // NISN
-                    TextField(
+                    _buildTextField(
                       controller: _nisnController,
+                      hint: 'NISN',
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: 'NISN',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
                     ),
                     const SizedBox(height: 12),
+
                     // Sandi Akun
-                    TextField(
+                    _buildTextField(
                       controller: _sandiAkunController,
-                      obscureText: _obscureSandi,
-                      decoration: InputDecoration(
-                        hintText: 'Sandi akun',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureSandi
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () =>
-                              setState(() => _obscureSandi = !_obscureSandi),
-                        ),
-                      ),
+                      hint: 'Sandi akun',
+                      obscure: _obscureSandi,
+                      onToggleObscure: () =>
+                          setState(() => _obscureSandi = !_obscureSandi),
                     ),
                     const SizedBox(height: 12),
+
+                    // Konfirmasi Sandi
+                    _buildTextField(
+                      controller: _konfirmasiSandiController,
+                      hint: 'Konfirmasi sandi akun',
+                      obscure: _obscureKonfirmasi,
+                      onToggleObscure: () => setState(
+                          () => _obscureKonfirmasi = !_obscureKonfirmasi),
+                    ),
+                    const SizedBox(height: 12),
+
                     // Sandi Kelas
-                    TextField(
+                    _buildTextField(
                       controller: _sandiKelasController,
-                      obscureText: _obscureSandiKelas,
-                      decoration: InputDecoration(
-                        hintText: 'Sandi kelas',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureSandiKelas
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () => setState(
-                              () => _obscureSandiKelas = !_obscureSandiKelas),
-                        ),
-                      ),
+                      hint: 'Sandi kelas',
+                      obscure: _obscureSandiKelas,
+                      onToggleObscure: () => setState(
+                          () => _obscureSandiKelas = !_obscureSandiKelas),
                     ),
                     const SizedBox(height: 20),
-                    // Tombol Masuk
+
+                    // Tombol Daftar
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _login,
+                        onPressed: _isLoading ? null : _daftar,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF4A90D9),
@@ -201,7 +195,7 @@ class _LoginMuridState extends State<LoginMurid> {
                             ? const CircularProgressIndicator(
                                 color: Color(0xFF4A90D9))
                             : const Text(
-                                'Masuk',
+                                'Daftar',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -210,11 +204,13 @@ class _LoginMuridState extends State<LoginMurid> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Link ke Login
                     GestureDetector(
-                      onTap: () =>
-                          Navigator.pushNamed(context, '/daftar-murid'),
+                      onTap: () => Navigator.pushReplacementNamed(
+                          context, '/login-murid'),
                       child: const Text(
-                        'Belum punya akun? Daftar',
+                        'Sudah punya akun? Masuk',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -234,10 +230,44 @@ class _LoginMuridState extends State<LoginMurid> {
     );
   }
 
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    bool obscure = false,
+    VoidCallback? onToggleObscure,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        suffixIcon: onToggleObscure != null
+            ? IconButton(
+                icon: Icon(
+                  obscure ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey,
+                ),
+                onPressed: onToggleObscure,
+              )
+            : null,
+      ),
+    );
+  }
+
   @override
   void dispose() {
+    _namaController.dispose();
     _nisnController.dispose();
     _sandiAkunController.dispose();
+    _konfirmasiSandiController.dispose();
     _sandiKelasController.dispose();
     super.dispose();
   }

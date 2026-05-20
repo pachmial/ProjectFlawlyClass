@@ -120,7 +120,7 @@ class RoleScreen extends StatelessWidget {
                             elevation: 0,
                           ),
                           child: const Text(
-                            'Login Sebagai Murid',
+                            'Masuk Sebagai Murid',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -145,7 +145,7 @@ class RoleScreen extends StatelessWidget {
                             ),
                           ),
                           child: const Text(
-                            'Login Sebagai Guru',
+                            'Masuk Sebagai Guru',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

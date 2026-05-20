@@ -11,7 +11,7 @@ import 'screens/murid/tugas_murid.dart';
 import 'screens/murid/detail_tugas_murid.dart';
 import 'screens/murid/submit_tugas_murid.dart';
 import 'screens/murid/kalender_murid.dart';
-
+import 'screens/auth/daftar_murid.dart';
 
 
 
@@ -51,6 +51,7 @@ class MyApp extends StatelessWidget {
         '/detail-tugas-murid': (context) => const DetailTugasMurid(),
         '/submit-tugas-murid': (context) => const SubmitTugasMurid(),
         '/kalender-murid': (context) => const KalenderMurid(),
+        '/daftar-murid': (context) => const DaftarMurid(),
 
 
 
