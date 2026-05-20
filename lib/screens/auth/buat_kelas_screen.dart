@@ -9,13 +9,20 @@ class BuatKelasScreen extends StatefulWidget {
 }
 
 class _BuatKelasScreenState extends State<BuatKelasScreen> {
+<<<<<<< HEAD
   final _namaGuruController = TextEditingController();
   final _namaKelasController = TextEditingController();
   final _namaRombelController = TextEditingController();
+=======
+  final _namaController = TextEditingController();
+  final _mataPelajaranController = TextEditingController();
+  final _kelasController = TextEditingController();
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
   final _sandiKelasController = TextEditingController();
   bool _isLoading = false;
   bool _obscureSandi = true;
 
+<<<<<<< HEAD
 Future<void> _buatKelas() async {
   if (_namaGuruController.text.isEmpty ||
       _namaKelasController.text.isEmpty ||
@@ -99,6 +106,71 @@ if (mounted) {
     final random = DateTime.now().millisecondsSinceEpoch;
     return List.generate(6, (i) => chars[(random + i * 7) % chars.length])
         .join();
+=======
+  Future<void> _buatKelas() async {
+    if (_namaController.text.isEmpty ||
+        _mataPelajaranController.text.isEmpty ||
+        _kelasController.text.isEmpty ||
+        _sandiKelasController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Semua field harus diisi!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      // Buat akun guru di Supabase Auth
+      final email =
+          '${_namaController.text.trim().replaceAll(' ', '').toLowerCase()}@flawlyclass.com';
+      final response = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: _sandiKelasController.text.trim(),
+      );
+
+      if (response.user != null) {
+        // Simpan data guru ke tabel users
+        await Supabase.instance.client.from('users').insert({
+          'id': response.user!.id,
+          'nama': _namaController.text.trim(),
+          'email': email,
+          'role': 'guru',
+          'kelas': _kelasController.text.trim(),
+        });
+
+        // Buat mata pelajaran
+        await Supabase.instance.client.from('mata_pelajaran').insert({
+          'nama': _mataPelajaranController.text.trim(),
+          'guru_id': response.user!.id,
+          'kelas': _kelasController.text.trim(),
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kelas berhasil dibuat!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/dashboard-guru');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal membuat kelas: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
   }
 
   @override
@@ -145,6 +217,7 @@ if (mounted) {
                       ),
                       const Text(
                         'Ayoo buat kelas anda',
+<<<<<<< HEAD
                         style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       const SizedBox(height: 28),
@@ -154,6 +227,19 @@ if (mounted) {
                         controller: _namaGuruController,
                         decoration: InputDecoration(
                           hintText: 'Nama Guru',
+=======
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      // Nama Guru
+                      TextField(
+                        controller: _namaController,
+                        decoration: InputDecoration(
+                          hintText: 'Nama',
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
@@ -163,10 +249,16 @@ if (mounted) {
                         ),
                       ),
                       const SizedBox(height: 16),
+<<<<<<< HEAD
 
                       // Mata Pelajaran
                       TextField(
                         controller: _namaKelasController,
+=======
+                      // Mata Pelajaran
+                      TextField(
+                        controller: _mataPelajaranController,
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                         decoration: InputDecoration(
                           hintText: 'Mata Pelajaran',
                           filled: true,
@@ -178,12 +270,20 @@ if (mounted) {
                         ),
                       ),
                       const SizedBox(height: 16),
+<<<<<<< HEAD
 
                       // Nama Rombel/Kelas
                       TextField(
                         controller: _namaRombelController,
                         decoration: InputDecoration(
                           hintText: 'Nama Kelas (contoh: 11 PPLG 2)',
+=======
+                      // Kelas
+                      TextField(
+                        controller: _kelasController,
+                        decoration: InputDecoration(
+                          hintText: 'Kelas',
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
@@ -193,13 +293,20 @@ if (mounted) {
                         ),
                       ),
                       const SizedBox(height: 16),
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                       // Sandi Kelas
                       TextField(
                         controller: _sandiKelasController,
                         obscureText: _obscureSandi,
                         decoration: InputDecoration(
+<<<<<<< HEAD
                           hintText: 'Sandi Kelas',
+=======
+                          hintText: 'Sandi kelas',
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
@@ -207,16 +314,27 @@ if (mounted) {
                             borderSide: BorderSide.none,
                           ),
                           suffixIcon: IconButton(
+<<<<<<< HEAD
                             icon: Icon(_obscureSandi
                                 ? Icons.visibility_off
                                 : Icons.visibility),
+=======
+                            icon: Icon(
+                              _obscureSandi
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                             onPressed: () => setState(
                                 () => _obscureSandi = !_obscureSandi),
                           ),
                         ),
                       ),
                       const SizedBox(height: 28),
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                       // Tombol Buat
                       SizedBox(
                         width: double.infinity,
@@ -242,6 +360,7 @@ if (mounted) {
                                 ),
                         ),
                       ),
+<<<<<<< HEAD
 
                       // Tombol kembali
                       const SizedBox(height: 12),
@@ -255,6 +374,8 @@ if (mounted) {
                           ),
                         ),
                       ),
+=======
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                     ],
                   ),
                 ),
@@ -268,9 +389,15 @@ if (mounted) {
 
   @override
   void dispose() {
+<<<<<<< HEAD
     _namaGuruController.dispose();
     _namaKelasController.dispose();
     _namaRombelController.dispose();
+=======
+    _namaController.dispose();
+    _mataPelajaranController.dispose();
+    _kelasController.dispose();
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
     _sandiKelasController.dispose();
     super.dispose();
   }

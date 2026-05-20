@@ -14,6 +14,7 @@ class _LoginGuruState extends State<LoginGuru> {
   bool _isLoading = false;
   bool _obscureSandiKelas = true;
 
+<<<<<<< HEAD
 Future<void> _login() async {
   if (_namaController.text.isEmpty || _sandiKelasController.text.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -54,6 +55,55 @@ Future<void> _login() async {
     if (mounted) setState(() => _isLoading = false);
   }
 }
+=======
+  Future<void> _login() async {
+    if (_namaController.text.isEmpty || _sandiKelasController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Semua field harus diisi!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      // Cari guru berdasarkan nama di tabel users
+      final data = await Supabase.instance.client
+          .from('users')
+          .select()
+          .eq('nama', _namaController.text.trim())
+          .eq('role', 'guru')
+          .single();
+
+      if (mounted) {
+        // Login pakai format nama@flawlyclass.com
+        final email = '${data['id']}@flawlyclass.com';
+        final response =
+            await Supabase.instance.client.auth.signInWithPassword(
+          email: email,
+          password: _sandiKelasController.text.trim(),
+        );
+
+        if (response.user != null && mounted) {
+          Navigator.pushReplacementNamed(context, '/dashboard-guru');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nama atau sandi kelas salah!'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
 
   @override
   Widget build(BuildContext context) {
@@ -168,6 +218,7 @@ Future<void> _login() async {
                                 ),
                         ),
                       ),
+<<<<<<< HEAD
                       const SizedBox(height: 12),
                       Center(
                         child: GestureDetector(
@@ -190,6 +241,8 @@ Future<void> _login() async {
                           ),
                         ),
                       ),
+=======
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
                     ],
                   ),
                 ),

@@ -11,8 +11,14 @@ import 'screens/murid/tugas_murid.dart';
 import 'screens/murid/detail_tugas_murid.dart';
 import 'screens/murid/submit_tugas_murid.dart';
 import 'screens/murid/kalender_murid.dart';
+<<<<<<< HEAD
 import 'screens/guru/dashboard_guru.dart';
 import 'screens/guru/tambah_tugas_guru.dart';
+=======
+
+
+
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,14 +50,25 @@ class MyApp extends StatelessWidget {
         '/login-murid': (context) => const LoginMurid(),
         '/login-guru': (context) => const LoginGuru(),
         '/role-guru': (context) => const RoleGuruScreen(),
+<<<<<<< HEAD
         '/buat-kelas': (context) => const BuatKelasScreen(), // ✅ hanya sekali
+=======
+        '/buat-kelas': (context) => const BuatKelasScreen(),
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
         '/dashboard-murid': (context) => const DashboardMurid(),
         '/tugas-murid': (context) => const TugasMurid(),
         '/detail-tugas-murid': (context) => const DetailTugasMurid(),
         '/submit-tugas-murid': (context) => const SubmitTugasMurid(),
         '/kalender-murid': (context) => const KalenderMurid(),
+<<<<<<< HEAD
         '/dashboard-guru': (context) => const DashboardGuru(), // ✅ ditambahkan
         '/tambah-tugas': (context) => const TambahTugasGuru(),
+=======
+
+
+
+
+>>>>>>> 1fe73cd6518a9085b8fc5fd7785a7986dffc1c37
       },
     );
   }
