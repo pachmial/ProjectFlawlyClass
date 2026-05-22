@@ -102,7 +102,7 @@ class _DashboardMuridState extends State<DashboardMurid> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.blue,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
@@ -232,7 +232,7 @@ Padding(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF4A90D9),
         unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
+        backgroundColor: const Color.fromARGB(255, 159, 204, 255),
         currentIndex: 0, // ✅ hardcode 0, tidak pakai variabel
         selectedFontSize: 11,
         unselectedFontSize: 11,

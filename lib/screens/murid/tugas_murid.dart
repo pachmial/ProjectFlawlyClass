@@ -35,17 +35,20 @@ class TugasMurid extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF4A90D9),
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Daftar Tugas Anda',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF4A90D9),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: const Text(
+              'Daftar Tugas Anda',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
-        ),
-      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _daftarTugas.length,

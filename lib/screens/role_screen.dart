@@ -20,31 +20,7 @@ class RoleScreen extends StatelessWidget {
               children: [
                 const SizedBox(height: 40),
                 // Logo
-                Image.asset('assets/images/l.png', width: 80),
-                const SizedBox(height: 4),
-                // Teks Flawly Class
-                RichText(
-                  text: const TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Flawly ',
-                        style: TextStyle(
-                          color: Color(0xFF4A90D9),
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'Class',
-                        style: TextStyle(
-                          color: Color(0xFF333333),
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Image.asset('assets/images/l.png', width: 300),
                 const SizedBox(height: 40),
                 // Gambar karakter
                 SizedBox(
@@ -57,7 +33,7 @@ class RoleScreen extends StatelessWidget {
                         bottom: 0,
                         child: Image.asset(
                           'assets/images/guru2.png',
-                          height: 160,
+                          height: 130,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -66,7 +42,7 @@ class RoleScreen extends StatelessWidget {
                         bottom: 0,
                         child: Image.asset(
                           'assets/images/siswa2.png',
-                          height: 180,
+                          height: 130,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -75,7 +51,7 @@ class RoleScreen extends StatelessWidget {
                         bottom: 0,
                         child: Image.asset(
                           'assets/images/siswa1.png',
-                          height: 180,
+                          height: 130,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -84,7 +60,7 @@ class RoleScreen extends StatelessWidget {
                         bottom: 0,
                         child: Image.asset(
                           'assets/images/guru1.png',
-                          height: 160,
+                          height: 130,
                           fit: BoxFit.contain,
                         ),
                       ),
