@@ -13,19 +13,15 @@ class _DaftarMuridState extends State<DaftarMurid> {
   final _nisnController = TextEditingController();
   final _sandiAkunController = TextEditingController();
   final _konfirmasiSandiController = TextEditingController();
-  final _sandiKelasController = TextEditingController();
-
   bool _isLoading = false;
   bool _obscureSandi = true;
   bool _obscureKonfirmasi = true;
-  bool _obscureSandiKelas = true;
 
   Future<void> _daftar() async {
     if (_namaController.text.isEmpty ||
         _nisnController.text.isEmpty ||
         _sandiAkunController.text.isEmpty ||
-        _konfirmasiSandiController.text.isEmpty ||
-        _sandiKelasController.text.isEmpty) {
+        _konfirmasiSandiController.text.isEmpty) {
       _showSnackbar('Semua field harus diisi!', Colors.red);
       return;
     }
@@ -51,7 +47,6 @@ class _DaftarMuridState extends State<DaftarMurid> {
       final nisn = _nisnController.text.trim();
       final email = '$nisn@flawlyclass.com';
 
-      // 1. Daftar ke Supabase Auth
       final response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: _sandiAkunController.text.trim(),
@@ -59,12 +54,10 @@ class _DaftarMuridState extends State<DaftarMurid> {
 
       if (response.user == null) throw Exception('Registrasi gagal');
 
-      // 2. Simpan data ke tabel murid (termasuk nama)
       await Supabase.instance.client.from('murid').insert({
         'id': response.user!.id,
         'nisn': nisn,
         'nama': _namaController.text.trim(),
-        'sandi_kelas': _sandiKelasController.text.trim(),
       });
 
       if (mounted) {
@@ -100,9 +93,7 @@ class _DaftarMuridState extends State<DaftarMurid> {
                 'assets/images/l.png',
                 width: 250,
                 errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.school,
-                  size: 80,
-                  color: Color(0xFF4A90D9),
+                  Icons.school, size: 80, color: Color(0xFF4A90D9),
                 ),
               ),
               const SizedBox(height: 32),
@@ -117,37 +108,23 @@ class _DaftarMuridState extends State<DaftarMurid> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Daftar',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('Daftar',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Buat akun murid baru',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                    ),
+                    const Text('Buat akun murid baru',
+                        style: TextStyle(color: Colors.white70, fontSize: 13)),
                     const SizedBox(height: 20),
-
-                    // Nama Lengkap
                     _buildTextField(
-                      controller: _namaController,
-                      hint: 'Nama lengkap',
-                    ),
+                        controller: _namaController, hint: 'Nama lengkap'),
                     const SizedBox(height: 12),
-
-                    // NISN
                     _buildTextField(
-                      controller: _nisnController,
-                      hint: 'NISN',
-                      keyboardType: TextInputType.number,
-                    ),
+                        controller: _nisnController,
+                        hint: 'NISN',
+                        keyboardType: TextInputType.number),
                     const SizedBox(height: 12),
-
-                    // Sandi Akun
                     _buildTextField(
                       controller: _sandiAkunController,
                       hint: 'Sandi akun',
@@ -156,8 +133,6 @@ class _DaftarMuridState extends State<DaftarMurid> {
                           setState(() => _obscureSandi = !_obscureSandi),
                     ),
                     const SizedBox(height: 12),
-
-                    // Konfirmasi Sandi
                     _buildTextField(
                       controller: _konfirmasiSandiController,
                       hint: 'Konfirmasi sandi akun',
@@ -165,19 +140,7 @@ class _DaftarMuridState extends State<DaftarMurid> {
                       onToggleObscure: () => setState(
                           () => _obscureKonfirmasi = !_obscureKonfirmasi),
                     ),
-                    const SizedBox(height: 12),
-
-                    // Sandi Kelas
-                    _buildTextField(
-                      controller: _sandiKelasController,
-                      hint: 'Sandi kelas',
-                      obscure: _obscureSandiKelas,
-                      onToggleObscure: () => setState(
-                          () => _obscureSandiKelas = !_obscureSandiKelas),
-                    ),
                     const SizedBox(height: 20),
-
-                    // Tombol Daftar
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -187,25 +150,19 @@ class _DaftarMuridState extends State<DaftarMurid> {
                           foregroundColor: const Color(0xFF4A90D9),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                              borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
                         ),
                         child: _isLoading
                             ? const CircularProgressIndicator(
                                 color: Color(0xFF4A90D9))
-                            : const Text(
-                                'Daftar',
+                            : const Text('Daftar',
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold)),
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Link ke Login
                     GestureDetector(
                       onTap: () => Navigator.pushReplacementNamed(
                           context, '/login-murid'),
@@ -268,7 +225,6 @@ class _DaftarMuridState extends State<DaftarMurid> {
     _nisnController.dispose();
     _sandiAkunController.dispose();
     _konfirmasiSandiController.dispose();
-    _sandiKelasController.dispose();
     super.dispose();
   }
 }
