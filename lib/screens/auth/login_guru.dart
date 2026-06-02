@@ -27,26 +27,19 @@ class _LoginGuruState extends State<LoginGuru> {
 
     setState(() => _isLoading = true);
     try {
-      // Cari guru berdasarkan nama di tabel users
-      final data = await Supabase.instance.client
-          .from('users')
-          .select()
-          .eq('nama', _namaController.text.trim())
-          .eq('role', 'guru')
-          .single();
+      final supabase = Supabase.instance.client;
+      final nama = _namaController.text.trim();
 
-      if (mounted) {
-        // Login pakai format nama@flawlyclass.com
-        final email = '${data['id']}@flawlyclass.com';
-        final response =
-            await Supabase.instance.client.auth.signInWithPassword(
-          email: email,
-          password: _sandiKelasController.text.trim(),
-        );
+      // Format email sama seperti saat buat kelas
+      final email = '${nama.toLowerCase().replaceAll(' ', '_')}@flawlyclass.com';
 
-        if (response.user != null && mounted) {
-          Navigator.pushReplacementNamed(context, '/dashboard-guru');
-        }
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: _sandiKelasController.text.trim(),
+      );
+
+      if (response.user != null && mounted) {
+        Navigator.pushReplacementNamed(context, '/dashboard-guru');
       }
     } catch (e) {
       if (mounted) {
@@ -173,6 +166,30 @@ class _LoginGuruState extends State<LoginGuru> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Center(
+                        child: GestureDetector(
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/buat-kelas'),
+                          child: RichText(
+                            text: const TextSpan(
+                              text: 'Belum punya kelas? ',
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 14),
+                              children: [
+                                TextSpan(
+                                  text: 'Buat kelas anda',
+                                  style: TextStyle(
+                                    color: Color(0xFF4A90D9),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],

@@ -37,30 +37,60 @@ class _LoginMuridState extends State<LoginMurid> {
 
       if (response.user == null) throw Exception('Login gagal');
 
-      // 2. Validasi sandi kelas dari tabel murid
-      final data = await Supabase.instance.client
-          .from('murid')
-          .select('sandi_kelas')
-          .eq('id', response.user!.id)
-          .single();
+      // 2. Cari kelas berdasarkan kode_kelas yang diinput
+      final kelasData = await Supabase.instance.client
+          .from('kelas')
+          .select('id, mata_pelajaran')
+          .eq('kode_kelas', _sandiKelasController.text.trim().toUpperCase())
+          .maybeSingle();
 
-      if (data['sandi_kelas'] != _sandiKelasController.text.trim()) {
-        // Sandi kelas salah, logout lagi
+      if (kelasData == null) {
         await Supabase.instance.client.auth.signOut();
-        _showSnackbar('Sandi kelas salah!', Colors.red);
+        _showSnackbar('Kode kelas tidak ditemukan!', Colors.red);
+        setState(() => _isLoading = false);
         return;
       }
 
-      // 3. Semua benar, masuk ke dashboard
+      // 3. Cari mapel_id berdasarkan nama mata pelajaran di kelas itu
+      final mapelData = await Supabase.instance.client
+          .from('mata_pelajaran')
+          .select('id')
+          .eq('nama', kelasData['mata_pelajaran'])
+          .maybeSingle();
+
+      if (mapelData == null) {
+        await Supabase.instance.client.auth.signOut();
+        _showSnackbar('Mata pelajaran tidak ditemukan!', Colors.red);
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // 4. Cek sudah join belum
+      final sudahJoin = await Supabase.instance.client
+          .from('class_members')
+          .select('id')
+          .eq('mapel_id', mapelData['id'])
+          .eq('murid_id', response.user!.id)
+          .maybeSingle();
+
+      // 5. Kalau belum join, insert ke class_members
+      if (sudahJoin == null) {
+        await Supabase.instance.client.from('class_members').insert({
+          'mapel_id': mapelData['id'],
+          'murid_id': response.user!.id,
+        });
+      }
+
+      // 6. Masuk ke dashboard
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/dashboard-murid');
       }
     } on AuthException catch (e) {
+      print('AUTH ERROR: ${e.message} | code: ${e.statusCode}');
       _showSnackbar(e.message, Colors.red);
     } catch (e) {
+      print('OTHER ERROR: $e');
       if (mounted) _showSnackbar('NISN atau sandi salah!', Colors.red);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -84,9 +114,7 @@ class _LoginMuridState extends State<LoginMurid> {
                 'assets/images/l.png',
                 width: 250,
                 errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.school,
-                  size: 80,
-                  color: Color(0xFF4A90D9),
+                  Icons.school, size: 80, color: Color(0xFF4A90D9),
                 ),
               ),
               const SizedBox(height: 32),
@@ -101,24 +129,16 @@ class _LoginMuridState extends State<LoginMurid> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Masuk',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    const Text('Masuk',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Masuk ke akun kamu',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
-                    ),
+                    const Text('Masuk ke akun kamu',
+                        style:
+                            TextStyle(color: Colors.white70, fontSize: 13)),
                     const SizedBox(height: 20),
-                    // NISN
                     TextField(
                       controller: _nisnController,
                       keyboardType: TextInputType.number,
@@ -133,7 +153,6 @@ class _LoginMuridState extends State<LoginMurid> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Sandi Akun
                     TextField(
                       controller: _sandiAkunController,
                       obscureText: _obscureSandi,
@@ -158,12 +177,12 @@ class _LoginMuridState extends State<LoginMurid> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Sandi Kelas
                     TextField(
                       controller: _sandiKelasController,
+                      textCapitalization: TextCapitalization.characters,
                       obscureText: _obscureSandiKelas,
                       decoration: InputDecoration(
-                        hintText: 'Sandi kelas',
+                        hintText: 'Kode kelas',
                         filled: true,
                         fillColor: Colors.white,
                         border: OutlineInputBorder(
@@ -177,13 +196,12 @@ class _LoginMuridState extends State<LoginMurid> {
                                 : Icons.visibility,
                             color: Colors.grey,
                           ),
-                          onPressed: () => setState(
-                              () => _obscureSandiKelas = !_obscureSandiKelas),
+                          onPressed: () => setState(() =>
+                              _obscureSandiKelas = !_obscureSandiKelas),
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Tombol Masuk
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -193,20 +211,16 @@ class _LoginMuridState extends State<LoginMurid> {
                           foregroundColor: const Color(0xFF4A90D9),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                              borderRadius: BorderRadius.circular(12)),
                           elevation: 0,
                         ),
                         child: _isLoading
                             ? const CircularProgressIndicator(
                                 color: Color(0xFF4A90D9))
-                            : const Text(
-                                'Masuk',
+                            : const Text('Masuk',
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold)),
                       ),
                     ),
                     const SizedBox(height: 16),

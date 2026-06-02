@@ -10,20 +10,14 @@ class DashboardMurid extends StatefulWidget {
 
 class _DashboardMuridState extends State<DashboardMurid> {
   String _namaMurid = '';
-
-  final List<Map<String, dynamic>> _mapel = const [
-    {'nama': 'MATEMATIKA', 'warna': Color(0xFFE8714A)},
-    {'nama': 'PJOK', 'warna': Color(0xFF4A8FA8)},
-    {'nama': 'SEJARAH', 'warna': Color(0xFFE8A84A)},
-    {'nama': 'P.A.I', 'warna': Color(0xFF4AAF7A)},
-    {'nama': 'B.Sunda', 'warna': Color(0xFF9B6ED4)},
-    {'nama': 'Kejuruan', 'warna': Color(0xFF2D3748)},
-  ];
+  List<Map<String, dynamic>> _mapel = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _ambilNama();
+    _ambilMapel();
   }
 
   Future<void> _ambilNama() async {
@@ -39,6 +33,41 @@ class _DashboardMuridState extends State<DashboardMurid> {
     if (mounted) {
       setState(() => _namaMurid = data['nama'] ?? '');
     }
+  }
+
+  Future<void> _ambilMapel() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final members = await Supabase.instance.client
+        .from('class_members')
+        .select('mapel_id')
+        .eq('murid_id', user.id);
+
+    if (members.isEmpty) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final mapelIds = members.map((m) => m['mapel_id']).toList();
+
+    final mapelData = await Supabase.instance.client
+        .from('mata_pelajaran')
+        .select('id, nama, warna')
+        .inFilter('id', mapelIds);
+
+    if (mounted) {
+      setState(() {
+        _mapel = List<Map<String, dynamic>>.from(mapelData);
+        _isLoading = false;
+      });
+    }
+  }
+
+  Color _parseWarna(String? hex) {
+    if (hex == null || hex.isEmpty) return const Color(0xFF4A90D9);
+    final clean = hex.replaceAll('#', '');
+    return Color(int.parse('FF$clean', radix: 16));
   }
 
   @override
@@ -85,11 +114,8 @@ class _DashboardMuridState extends State<DashboardMurid> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        Icons.school,
-                        color: Color(0xFF4A90D9),
-                        size: 32,
-                      ),
+                      child: const Icon(Icons.school,
+                          color: Color(0xFF4A90D9), size: 32),
                     ),
                   ),
                 ],
@@ -102,11 +128,11 @@ class _DashboardMuridState extends State<DashboardMurid> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.blue,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -125,138 +151,143 @@ class _DashboardMuridState extends State<DashboardMurid> {
             ),
             const SizedBox(height: 20),
 
-// Shortcut Icons
-Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 20),
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.spaceAround,
-    children: [
-      _buildShortcut(
-        context,
-        imagePath: 'assets/images/Vector-1.png', // buku = tugas
-        label: 'Tugas Anda',
-        route: '/tugas-murid',
-      ),
-      _buildShortcut(
-        context,
-        imagePath: 'assets/images/Vector-2.png', // kalender
-        label: 'Kalender',
-        route: '/kalender-murid',
-      ),
-      _buildShortcut(
-        context,
-        imagePath: 'assets/images/Vector-3.png', // akun
-        label: 'Akun Anda',
-        route: '/profil-murid',
-      ),
-    ],
-  ),
-),
-
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildShortcut(context,
+                      imagePath: 'assets/images/Vector-1.png',
+                      label: 'Tugas Anda',
+                      route: '/tugas-murid'),
+                  _buildShortcut(context,
+                      imagePath: 'assets/images/Vector-2.png',
+                      label: 'Kalender',
+                      route: '/kalender-murid'),
+                  _buildShortcut(context,
+                      imagePath: 'assets/images/Vector-3.png',
+                      label: 'Akun Anda',
+                      route: '/profil-murid'),
+                ],
+              ),
+            ),
             const SizedBox(height: 20),
 
             Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.15,
-                ),
-                itemCount: _mapel.length,
-                itemBuilder: (context, index) {
-                  final mapel = _mapel[index];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/detail-mapel-murid');
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: mapel['warna'],
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            top: -15,
-                            right: -15,
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
-                                shape: BoxShape.circle,
-                              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _mapel.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Belum join kelas apapun.\nMinta kode kelas dari guru kamu!',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFF3A5A8A),
+                              fontSize: 14,
                             ),
                           ),
-                          Positioned(
-                            bottom: -20,
-                            right: 20,
-                            child: Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
+                        )
+                      : GridView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.15,
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Text(
-                                mapel['nama'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
+                          itemCount: _mapel.length,
+                          itemBuilder: (context, index) {
+                            final mapel = _mapel[index];
+                            final warna = _parseWarna(mapel['warna']);
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/detail-mapel-murid',
+                                  arguments: {
+                                    'mapel_id': mapel['id'],
+                                    'nama': mapel['nama'],
+                                  },
+                                );
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: warna,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      top: -15,
+                                      right: -15,
+                                      child: Container(
+                                        width: 80,
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.15),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: -20,
+                                      right: 20,
+                                      child: Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.1),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Align(
+                                        alignment: Alignment.bottomLeft,
+                                        child: Text(
+                                          mapel['nama'] ?? '',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),
       ),
-
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF4A90D9),
         unselectedItemColor: Colors.grey,
-        backgroundColor: const Color.fromARGB(255, 159, 204, 255),
-        currentIndex: 0, // ✅ hardcode 0, tidak pakai variabel
+        backgroundColor: Colors.white,
+        currentIndex: 0,
         selectedFontSize: 11,
         unselectedFontSize: 11,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Beranda',
-          ),
+              icon: Icon(Icons.home_rounded), label: 'Beranda'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_rounded),
-            label: 'Tugas Anda',
-          ),
+              icon: Icon(Icons.menu_book_rounded), label: 'Tugas Anda'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.video_call_rounded),
-            label: 'Flawly Zoom',
-          ),
+              icon: Icon(Icons.video_call_rounded), label: 'Flawly Zoom'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_rounded),
-            label: 'Kalender',
-          ),
+              icon: Icon(Icons.calendar_month_rounded), label: 'Kalender'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Akun',
-          ),
+              icon: Icon(Icons.person_rounded), label: 'Akun'),
         ],
         onTap: (index) {
           switch (index) {
@@ -281,52 +312,43 @@ Padding(
     );
   }
 
-// Ganti fungsi _buildShortcut jadi ini:
-Widget _buildShortcut(
-  BuildContext context, {
-  required String imagePath,
-  required String label,
-  required String route,
-}) {
-  return GestureDetector(
-    onTap: () => Navigator.pushNamed(context, route),
-    child: Column(
-      children: [
-        Container(
-          width: 72,
-          height: 72,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 8,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(18),
-          child: ColorFiltered(
-            colorFilter: const ColorFilter.mode(
-              Color(0xFF4A90D9), // warna biru
-              BlendMode.srcIn,
+  Widget _buildShortcut(BuildContext context,
+      {required String imagePath,
+      required String label,
+      required String route}) {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, route),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 2)),
+              ],
             ),
-            child: Image.asset(imagePath),
+            padding: const EdgeInsets.all(18),
+            child: ColorFiltered(
+              colorFilter: const ColorFilter.mode(
+                  Color(0xFF4A90D9), BlendMode.srcIn),
+              child: Image.asset(imagePath),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFF1A2F5A),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    ),
-  );
-}
+          const SizedBox(height: 8),
+          Text(label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF1A2F5A),
+                  fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
 }
