@@ -16,82 +16,75 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
   bool _isLoading = false;
   bool _obscureSandi = true;
 
-  Future<void> _buatKelas() async {
-    if (_namaGuruController.text.isEmpty ||
-        _namaKelasController.text.isEmpty ||
-        _namaRombelController.text.isEmpty ||
-        _sandiKelasController.text.isEmpty) {
+Future<void> _buatKelas() async {
+  if (_namaGuruController.text.isEmpty ||
+      _namaKelasController.text.isEmpty ||
+      _namaRombelController.text.isEmpty ||
+      _sandiKelasController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Semua field harus diisi!'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  try {
+    final supabase = Supabase.instance.client;
+    final nama = _namaGuruController.text.trim();
+    final sandi = _sandiKelasController.text.trim();
+    final email = '${nama.toLowerCase().replaceAll(' ', '_')}@flawlyclass.com';
+
+    // 1. Daftar akun
+    final authResponse = await supabase.auth.signUp(
+      email: email,
+      password: sandi,
+    );
+
+    if (authResponse.user == null) throw Exception('Gagal membuat akun');
+    final userId = authResponse.user!.id;
+    final kodeKelas = _generateKodeKelas();
+
+    // 2. Panggil SQL function — semua insert dilakukan di sisi server, bypass RLS
+    await supabase.rpc('buat_kelas_guru', params: {
+      'p_user_id': userId,
+      'p_nama': nama,
+      'p_email': email,
+      'p_nama_kelas': _namaKelasController.text.trim(),
+      'p_nama_rombel': _namaRombelController.text.trim(),
+      'p_kode_kelas': kodeKelas,
+    });
+
+    // 3. Logout setelah semua berhasil
+    await supabase.auth.signOut();
+
+    if (mounted) {
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Semua field harus diisi!'),
+          content: Text('Kelas berhasil dibuat! Silakan masuk.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/login-guru');
+    }
+  } catch (e) {
+    if (mounted) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuat kelas: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
-      return;
     }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final supabase = Supabase.instance.client;
-      final nama = _namaGuruController.text.trim();
-      final sandi = _sandiKelasController.text.trim();
-
-      // Email dibuat dari nama (tanpa spasi) supaya unik
-      final email =
-          '${nama.toLowerCase().replaceAll(' ', '_')}@flawlyclass.com';
-
-      final authResponse = await supabase.auth.signUp(
-        email: email,
-        password: sandi,
-      );
-
-      if (authResponse.user == null) throw Exception('Gagal membuat akun');
-
-      final userId = authResponse.user!.id;
-
-      // Insert profil guru ke tabel users
-      await supabase.from('users').insert({
-        'id': userId,
-        'nama': nama,
-        'email': email,
-        'role': 'guru',
-      });
-
-      // Insert kelas baru
-      await supabase.from('kelas').insert({
-        'guru_id': userId,
-        'nama_kelas': _namaRombelController.text.trim(),
-        'mata_pelajaran': _namaKelasController.text.trim(),
-        'kode_kelas': _generateKodeKelas(),
-        'created_at': DateTime.now().toIso8601String(),
-      });
-
-      // Logout dulu, baru ke halaman login guru
-      await supabase.auth.signOut();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kelas berhasil dibuat! Silakan masuk.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/login-guru');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal membuat kelas: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
   }
+}
 
   // Generate kode kelas acak 6 karakter
   String _generateKodeKelas() {

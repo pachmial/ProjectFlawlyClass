@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,6 +15,8 @@ class _ProfilMuridState extends State<ProfilMurid> {
   bool _isLoading = true;
   bool _showDataDiri = false;
   bool _showDaftarTugas = false;
+  String? _fotoProfilUrl;
+  bool _uploadingFoto = false;
 
   @override
   void initState() {
@@ -26,14 +29,12 @@ class _ProfilMuridState extends State<ProfilMurid> {
       final supabase = Supabase.instance.client;
       final userId = supabase.auth.currentUser!.id;
 
-      // Ambil data murid
       final muridData = await supabase
           .from('murid')
-          .select('nama, nisn')
+          .select('nama, nisn, foto_url')
           .eq('id', userId)
           .single();
 
-      // Ambil mapel yang diikuti beserta progress tugas
       final members = await supabase
           .from('class_members')
           .select('mapel_id')
@@ -50,22 +51,18 @@ class _ProfilMuridState extends State<ProfilMurid> {
             .inFilter('id', mapelIds);
 
         for (final mapel in (mapelData as List)) {
-          // Hitung total tugas
           final tugasTotal = await supabase
               .from('tugas')
               .select('id')
               .eq('mapel_id', mapel['id']);
 
-          // Hitung tugas yang sudah dikerjakan
           final tugasSelesai = await supabase
               .from('submissions')
               .select('id')
               .eq('murid_id', userId)
               .inFilter(
                   'tugas_id',
-                  (tugasTotal as List)
-                      .map((t) => t['id'])
-                      .toList());
+                  (tugasTotal as List).map((t) => t['id']).toList());
 
           mapelList.add({
             'id': mapel['id'],
@@ -77,7 +74,6 @@ class _ProfilMuridState extends State<ProfilMurid> {
         }
       }
 
-      // Ambil kelas dari mapel pertama (untuk data diri)
       String kelas = '';
       if (mapelList.isNotEmpty) {
         kelas = mapelList.first['kelas'] ?? '';
@@ -89,6 +85,7 @@ class _ProfilMuridState extends State<ProfilMurid> {
           'nisn': muridData['nisn'],
           'kelas': kelas,
         };
+        _fotoProfilUrl = muridData['foto_url'];
         _mapelList = mapelList;
         _isLoading = false;
       });
@@ -97,95 +94,140 @@ class _ProfilMuridState extends State<ProfilMurid> {
     }
   }
 
-  Future<void> _tambahKelas(String kodeKelas) async {
-    try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser!.id;
+  Future<void> _pilihDanCropFoto() async {
+  try {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true,
+    );
 
-      // Cari kelas berdasarkan kode
-      final kelasData = await supabase
-          .from('kelas')
-          .select('id, mata_pelajaran')
-          .eq('kode_kelas', kodeKelas.toUpperCase())
-          .maybeSingle();
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.first;
+    if (file.bytes == null) return;
 
-      if (kelasData == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Kode kelas tidak ditemukan!'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
+    setState(() => _uploadingFoto = true);
 
-      // Cari mapel
-      final mapelData = await supabase
-          .from('mata_pelajaran')
-          .select('id')
-          .eq('nama', kelasData['mata_pelajaran'])
-          .maybeSingle();
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser!.id;
+    final fileName = '$userId/profil_${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-      if (mapelData == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Mata pelajaran tidak ditemukan!'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
+    await supabase.storage
+        .from('foto-profil')
+        .uploadBinary(fileName, file.bytes!,
+            fileOptions: const FileOptions(upsert: true));
 
-      // Cek sudah join belum
-      final sudahJoin = await supabase
-          .from('class_members')
-          .select('id')
-          .eq('mapel_id', mapelData['id'])
-          .eq('murid_id', userId)
-          .maybeSingle();
+    final url = supabase.storage
+        .from('foto-profil')
+        .getPublicUrl(fileName);
 
-      if (sudahJoin != null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Kamu sudah bergabung di kelas ini!'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-        return;
-      }
+    await supabase
+        .from('murid')
+        .update({'foto_url': url})
+        .eq('id', userId);
 
-      await supabase.from('class_members').insert({
-        'mapel_id': mapelData['id'],
-        'murid_id': userId,
-      });
+    setState(() {
+      _fotoProfilUrl = url;
+      _uploadingFoto = false;
+    });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Berhasil bergabung ke kelas!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-        _ambilData(); // Refresh data
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal bergabung: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto profil berhasil diperbarui!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  } catch (e) {
+    setState(() => _uploadingFoto = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal upload foto: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
+}
+
+Future<void> _tambahKelas(String kodeKelas) async {
+  try {
+    final supabase = Supabase.instance.client;
+    final userId = supabase.auth.currentUser!.id;
+
+    final kelasData = await supabase
+        .from('kelas')
+        .select('id, mata_pelajaran')
+        .eq('kode_kelas', kodeKelas.toUpperCase())
+        .maybeSingle();
+
+    if (kelasData == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kode kelas tidak ditemukan!'),
+              backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+
+    final mapelData = await supabase
+        .from('mata_pelajaran')
+        .select('id')
+        .eq('nama', kelasData['mata_pelajaran'])
+        .maybeSingle();
+
+    if (mapelData == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mata pelajaran tidak ditemukan!'),
+              backgroundColor: Colors.red),
+        );
+      }
+      return;
+    }
+
+    final sudahJoin = await supabase
+        .from('class_members')
+        .select('id')
+        .eq('mapel_id', mapelData['id'])
+        .eq('murid_id', userId)
+        .maybeSingle();
+
+    if (sudahJoin != null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kamu sudah bergabung di kelas ini!'),
+              backgroundColor: Colors.orange),
+        );
+      }
+      return;
+    }
+
+    await supabase.from('class_members').insert({
+      'mapel_id': mapelData['id'],
+      'murid_id': userId,
+    });
+
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🎉 Berhasil bergabung ke kelas!'),
+            backgroundColor: Colors.green),
+      );
+      _ambilData();
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal bergabung: $e'),
+            backgroundColor: Colors.red),
+      );
+    }
+  }
+}
 
   void _showTambahKelasDialog() {
     final controller = TextEditingController();
@@ -206,15 +248,11 @@ class _ProfilMuridState extends State<ProfilMurid> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Tambahkan Kelas',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text('Tambahkan Kelas',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            const Text(
-              'Masukkan kode kelas dari gurumu',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
+            const Text('Masukkan kode kelas dari gurumu',
+                style: TextStyle(color: Colors.grey, fontSize: 13)),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
@@ -242,13 +280,11 @@ class _ProfilMuridState extends State<ProfilMurid> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text(
-                  'Bergabung',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                child: const Text('Bergabung',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -261,7 +297,8 @@ class _ProfilMuridState extends State<ProfilMurid> {
     final konfirmasi = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Keluar Akun'),
         content: const Text('Apakah kamu yakin ingin keluar?'),
         actions: [
@@ -303,11 +340,9 @@ class _ProfilMuridState extends State<ProfilMurid> {
                     alignment: Alignment.topCenter,
                     children: [
                       Container(
-                        height: 160,
+                        height: 180,
                         width: double.infinity,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFD6E4F7),
-                        ),
+                        color: const Color(0xFFD6E4F7),
                       ),
                       Positioned(
                         top: 16,
@@ -319,23 +354,75 @@ class _ProfilMuridState extends State<ProfilMurid> {
                               context, '/dashboard-murid'),
                         ),
                       ),
+                      // Avatar dengan tombol kamera
                       Positioned(
-                        top: 20,
-                        child: Container(
-                          width: 90,
-                          height: 90,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                                color: const Color(0xFF4A90D9), width: 3),
+                        top: 16,
+                        child: GestureDetector(
+                          onTap: _uploadingFoto ? null : _pilihDanCropFoto,
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 110,
+                                height: 110,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF4A90D9),
+                                    width: 3,
+                                  ),
+                                ),
+                                child: _uploadingFoto
+                                    ? const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Color(0xFF4A90D9),
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : ClipOval(
+                                        child: _fotoProfilUrl != null
+                                            ? Image.network(
+                                                _fotoProfilUrl!,
+                                                width: 110,
+                                                height: 110,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (c, e, s) =>
+                                                    const Icon(Icons.person,
+                                                        size: 60,
+                                                        color: Color(
+                                                            0xFF4A90D9)),
+                                              )
+                                            : const Icon(Icons.person,
+                                                size: 60,
+                                                color: Color(0xFF4A90D9)),
+                                      ),
+                              ),
+                              // Tombol kamera di pojok kanan bawah
+                              Positioned(
+                                bottom: 2,
+                                right: 2,
+                                child: Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF4A90D9),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white, width: 2),
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: const Icon(Icons.person,
-                              size: 50, color: Color(0xFF4A90D9)),
                         ),
                       ),
                       Positioned(
-                        bottom: 8,
+                        bottom: 6,
                         child: Text(
                           _dataMurid?['nama'] ?? '',
                           style: const TextStyle(
@@ -369,9 +456,12 @@ class _ProfilMuridState extends State<ProfilMurid> {
                             ),
                           ),
                           if (_showDataDiri) ...[
-                            _buildInfoCard('Nama', _dataMurid?['nama'] ?? '-'),
-                            _buildInfoCard('Kelas', _dataMurid?['kelas'] ?? '-'),
-                            _buildInfoCard('NISN', _dataMurid?['nisn'] ?? '-'),
+                            _buildInfoCard(
+                                'Nama', _dataMurid?['nama'] ?? '-'),
+                            _buildInfoCard(
+                                'Kelas', _dataMurid?['kelas'] ?? '-'),
+                            _buildInfoCard(
+                                'NISN', _dataMurid?['nisn'] ?? '-'),
                             _buildInfoCard('Sebagai', 'Murid'),
                           ],
 
@@ -439,7 +529,8 @@ class _ProfilMuridState extends State<ProfilMurid> {
                             onTap: _keluarAkun,
                             child: Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 14),
                               margin: const EdgeInsets.only(bottom: 16),
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -567,10 +658,8 @@ class _ProfilMuridState extends State<ProfilMurid> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
+          Text(label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 4),
           Text(
             value,

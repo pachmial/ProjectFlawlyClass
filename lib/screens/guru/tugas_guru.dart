@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+
 
 class TugasGuru extends StatefulWidget {
   const TugasGuru({super.key});
@@ -200,6 +203,54 @@ class _DetailTugasGuruState extends State<DetailTugasGuru> {
   List<Map<String, dynamic>> _daftarMurid = [];
   bool _isLoading = true;
 
+  void _lihatFotoFullscreen(String url) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => Scaffold(
+        backgroundColor: Colors.black,
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          iconTheme: const IconThemeData(color: Colors.white),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.download, color: Colors.white),
+              onPressed: () => _bukaUrl(url),
+            ),
+          ],
+        ),
+        body: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 5.0,
+          child: Center(
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              errorBuilder: (c, e, s) => const Text(
+                'Gagal memuat foto',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+void _bukaUrl(String url) async {
+  try {
+    // ignore: deprecated_member_use
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal membuka: $e')),
+      );
+    }
+  }
+}
+
   @override
   void initState() {
     super.initState();
@@ -241,7 +292,7 @@ class _DetailTugasGuruState extends State<DetailTugasGuru> {
       // Ambil submissions untuk tugas ini
       final submissions = await supabase
           .from('submissions')
-          .select('murid_id, submitted_at, tautan, sudah_diperiksa')
+          .select('murid_id, submitted_at, tautan, foto_url, sudah_diperiksa')
           .eq('tugas_id', widget.tugasId);
 
       final submissionMap = {
@@ -257,6 +308,7 @@ class _DetailTugasGuruState extends State<DetailTugasGuru> {
           'sudah_kumpul': sub != null,
           'submitted_at': sub?['submitted_at'],
           'tautan': sub?['tautan'],
+          'foto_url': sub?['foto_url'],
           'sudah_diperiksa': sub?['sudah_diperiksa'] ?? false,
           'submission_id': sub != null ? sub['murid_id'] : null,
         };
@@ -489,21 +541,113 @@ class _DetailTugasGuruState extends State<DetailTugasGuru> {
               style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
             const SizedBox(height: 16),
-            if (murid['tautan'] != null && murid['tautan'].isNotEmpty) ...[
-              const Text('Tautan tugas:',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 4),
-              Text(
-                murid['tautan'],
-                style: const TextStyle(
-                    color: Color(0xFF4A90D9), fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-            ] else ...[
-              const Text('Tidak ada tautan yang dilampirkan.',
-                  style: TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
-            ],
+           // Tambahkan ini sebelum bagian tautan
+if (murid['foto_url'] != null && murid['foto_url'].isNotEmpty) ...[
+  const Text('Foto tugas:',
+      style: TextStyle(fontWeight: FontWeight.w600)),
+  const SizedBox(height: 8),
+  GestureDetector(
+    onTap: () {
+      Navigator.pop(context);
+      _lihatFotoFullscreen(murid['foto_url']);
+    },
+    child: Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            murid['foto_url'],
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            errorBuilder: (c, e, s) => const Text(
+              'Gagal memuat foto',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 8,
+          bottom: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.fullscreen, color: Colors.white, size: 16),
+                SizedBox(width: 4),
+                Text('Perbesar', style: TextStyle(color: Colors.white, fontSize: 12)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+  const SizedBox(height: 8),
+
+
+  
+  // Tombol Download
+  SizedBox(
+    width: double.infinity,
+    child: OutlinedButton.icon(
+      onPressed: () {
+        // Buka URL foto di browser baru untuk download
+        final url = murid['foto_url'];
+        _bukaUrl(url);
+      },
+      icon: const Icon(Icons.download, color: Color(0xFF4A90D9)),
+      label: const Text('Download Foto', style: TextStyle(color: Color(0xFF4A90D9))),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Color(0xFF4A90D9)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+      ),
+    ),
+  ),
+  const SizedBox(height: 16),
+],
+
+// Tautan tugas
+if (murid['tautan'] != null && murid['tautan'].toString().isNotEmpty) ...[
+  const Text('Tautan tugas:',
+      style: TextStyle(fontWeight: FontWeight.w600)),
+  const SizedBox(height: 4),
+  Row(
+    children: [
+      Expanded(
+        child: Text(
+          murid['tautan'],
+          style: const TextStyle(
+              color: Color(0xFF4A90D9), fontSize: 13),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      IconButton(
+        icon: const Icon(Icons.copy, size: 18, color: Color(0xFF4A90D9)),
+        onPressed: () {
+          Clipboard.setData(ClipboardData(text: murid['tautan']));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tautan disalin!')),
+          );
+        },
+      ),
+      IconButton(
+        icon: const Icon(Icons.open_in_browser, size: 18, color: Color(0xFF4A90D9)),
+        onPressed: () => _bukaUrl(murid['tautan']),
+      ),
+    ],
+  ),
+  const SizedBox(height: 16),
+],
+const SizedBox(height: 16),
+if (!(murid['sudah_diperiksa'] as bool))
+
             if (!(murid['sudah_diperiksa'] as bool))
               SizedBox(
                 width: double.infinity,

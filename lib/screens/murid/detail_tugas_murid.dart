@@ -140,6 +140,7 @@ class _DetailTugasMuridState extends State<DetailTugasMurid> {
                             'tugas_id': tugas['id'],
                             'judul': tugas['judul'],
                             'status': tugas['status'],
+                            'deadline': tugas['deadline'] ?? '',
                           },
                         );
                         // Refresh setelah kembali dari submit
