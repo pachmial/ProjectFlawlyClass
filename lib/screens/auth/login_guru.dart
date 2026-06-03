@@ -30,7 +30,6 @@ class _LoginGuruState extends State<LoginGuru> {
       final supabase = Supabase.instance.client;
       final nama = _namaController.text.trim();
 
-      // Format email sama seperti saat buat kelas
       final email = '${nama.toLowerCase().replaceAll(' ', '_')}@flawlyclass.com';
 
       final response = await supabase.auth.signInWithPassword(
