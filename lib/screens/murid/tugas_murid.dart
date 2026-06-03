@@ -28,47 +28,62 @@ class _TugasMuridState extends State<TugasMurid> {
     _ambilMapel();
   }
 
-Future<void> _ambilMapel() async {
-  try {
-    final supabase = Supabase.instance.client;
-    final userId = supabase.auth.currentUser!.id;
+  Future<void> _ambilMapel() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser!.id;
 
-    final members = await supabase
-        .from('class_members')
-        .select('mapel_id')
-        .eq('murid_id', userId);
+      // Ambil mapel_id yang diikuti murid
+      final members = await supabase
+          .from('class_members')
+          .select('mapel_id')
+          .eq('murid_id', userId);
 
-    if ((members as List).isEmpty) {
+      if (members.isEmpty) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final mapelIds = (members as List).map((m) => m['mapel_id']).toList();
+
+      // Ambil detail mapel beserta guru_id
+      final mapelData = await supabase
+          .from('mata_pelajaran')
+          .select('id, nama, guru_id')
+          .inFilter('id', mapelIds);
+
+      // Ambil nama guru dari tabel users
+      final guruIds =
+          (mapelData as List).map((m) => m['guru_id']).toSet().toList();
+
+      final guruData = await supabase
+          .from('users')
+          .select('id, nama')
+          .inFilter('id', guruIds);
+
+      final guruMap = {
+        for (var g in (guruData as List)) g['id']: g['nama']
+      };
+
+      final list = mapelData.map((m) => {
+            'id': m['id'],
+            'nama': m['nama'],
+            'guru': guruMap[m['guru_id']] ?? 'Guru',
+          }).toList();
+
+      setState(() {
+        _daftarMapel = List<Map<String, dynamic>>.from(list);
+        _isLoading = false;
+      });
+    } catch (e) {
       setState(() => _isLoading = false);
-      return;
-    }
-
-    final mapelIds = members.map((m) => m['mapel_id']).toList();
-
-    final mapelData = await supabase
-        .from('mata_pelajaran')
-        .select('id, nama, users(nama)')
-        .inFilter('id', mapelIds);
-
-    final list = (mapelData as List).map((m) => {
-          'id': m['id'],
-          'nama': m['nama'],
-          'guru': m['users']?['nama'] ?? 'Guru',
-        }).toList();
-
-    setState(() {
-      _daftarMapel = List<Map<String, dynamic>>.from(list);
-      _isLoading = false;
-    });
-  } catch (e) {
-    setState(() => _isLoading = false);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat data: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data: $e')),
+        );
+      }
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {

@@ -80,6 +80,7 @@ class _DashboardMuridState extends State<DashboardMurid> {
     }
   }
 
+  // ignore: unused_element
   Color _parseWarna(String? hex) {
     if (hex == null || hex.isEmpty) return const Color(0xFF4A90D9);
     final clean = hex.replaceAll('#', '');

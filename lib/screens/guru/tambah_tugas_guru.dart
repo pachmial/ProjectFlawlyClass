@@ -46,6 +46,7 @@ Future<void> _konfirmasi() async {
   try {
     final supabase = Supabase.instance.client;
     final userId = supabase.auth.currentUser!.id;
+    // ignore: avoid_print
     print('User ID yang login: $userId');
 
     // Ambil mapel_id dari mata_pelajaran berdasarkan guru_id

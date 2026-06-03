@@ -238,6 +238,7 @@ Future<void> _loadExistingSubmission() async {
                 ),
                 label: Text(
                   _selectedFile != null
+                      // ignore: unnecessary_string_interpolations
                       ? '${_selectedFile!.name}'
                       : 'Tambahkan Foto',
                   style: TextStyle(
