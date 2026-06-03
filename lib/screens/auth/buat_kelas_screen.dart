@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BuatKelasScreen extends StatefulWidget {
@@ -36,51 +37,122 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
       final supabase = Supabase.instance.client;
       final nama = _namaGuruController.text.trim();
       final sandi = _sandiKelasController.text.trim();
+      final email = '${nama.toLowerCase().replaceAll(' ', '_')}@flawlyclass.com';
+      final kodeKelas = _generateKodeKelas();
 
-      // Email dibuat dari nama (tanpa spasi) supaya unik
-      final email =
-          '${nama.toLowerCase().replaceAll(' ', '_')}@flawlyclass.com';
-
+      // 1. Daftar akun
       final authResponse = await supabase.auth.signUp(
         email: email,
         password: sandi,
       );
 
       if (authResponse.user == null) throw Exception('Gagal membuat akun');
-
       final userId = authResponse.user!.id;
 
-      // Insert profil guru ke tabel users
-      await supabase.from('users').insert({
-        'id': userId,
-        'nama': nama,
-        'email': email,
-        'role': 'guru',
+      // 2. Panggil SQL function
+      await supabase.rpc('buat_kelas_guru', params: {
+        'p_user_id': userId,
+        'p_nama': nama,
+        'p_email': email,
+        'p_nama_kelas': _namaKelasController.text.trim(),
+        'p_nama_rombel': _namaRombelController.text.trim(),
+        'p_kode_kelas': kodeKelas,
       });
 
-      // Insert kelas baru
-      await supabase.from('kelas').insert({
-        'guru_id': userId,
-        'nama_kelas': _namaRombelController.text.trim(),
-        'mata_pelajaran': _namaKelasController.text.trim(),
-        'kode_kelas': _generateKodeKelas(),
-        'created_at': DateTime.now().toIso8601String(),
-      });
-
-      // Logout dulu, baru ke halaman login guru
+      // 3. Logout
       await supabase.auth.signOut();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Kelas berhasil dibuat! Silakan masuk.'),
-            backgroundColor: Colors.green,
+        setState(() => _isLoading = false);
+
+        // Tampilkan popup kode kelas
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20)),
+            title: const Text('Kelas Berhasil Dibuat! ',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Bagikan kode ini ke murid anda:',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEDF3FB),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    kodeKelas,
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A90D9),
+                      letterSpacing: 8,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: kodeKelas));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Kode disalin!')),
+                    );
+                  },
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.copy, size: 16, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text('Salin kode',
+                          style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Simpan kode ini! Murid membutuhkannya untuk bergabung dalam kelas anda.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
+            ),
+            actions: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushReplacementNamed(context, '/login-guru');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4A90D9),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Mengerti, Lanjut Login',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
           ),
         );
-        Navigator.pushReplacementNamed(context, '/login-guru');
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal membuat kelas: ${e.toString()}'),
@@ -93,12 +165,10 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
     }
   }
 
-  // Generate kode kelas acak 6 karakter
   String _generateKodeKelas() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = DateTime.now().millisecondsSinceEpoch;
-    return List.generate(6, (i) => chars[(random + i * 7) % chars.length])
-        .join();
+    return List.generate(6, (i) => chars[(random + i * 7) % chars.length]).join();
   }
 
   @override
@@ -111,14 +181,9 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
             const SizedBox(height: 40),
             const Icon(Icons.school, size: 60, color: Colors.white),
             const SizedBox(height: 8),
-            const Text(
-              'Flawly Class',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const Text('Flawly Class',
+                style: TextStyle(color: Colors.white, fontSize: 22,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             Expanded(
               child: Container(
@@ -135,25 +200,18 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Buat Kelas',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF333333),
-                        ),
-                      ),
-                      const Text(
-                        'Ayoo buat kelas anda',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
+                      const Text('Buat Kelas',
+                          style: TextStyle(fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF333333))),
+                      const Text('Ayoo buat kelas anda',
+                          style: TextStyle(fontSize: 14, color: Colors.grey)),
                       const SizedBox(height: 28),
 
-                      // Nama Guru
                       TextField(
                         controller: _namaGuruController,
                         decoration: InputDecoration(
-                          hintText: 'Nama Guru',
+                          hintText: 'Nama ',
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
@@ -164,7 +222,6 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Mata Pelajaran
                       TextField(
                         controller: _namaKelasController,
                         decoration: InputDecoration(
@@ -179,11 +236,10 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Nama Rombel/Kelas
                       TextField(
                         controller: _namaRombelController,
                         decoration: InputDecoration(
-                          hintText: 'Nama Kelas',
+                          hintText: 'Nama Kelas (contoh: 10 pplg 1)',
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
@@ -194,12 +250,11 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Sandi Kelas
                       TextField(
                         controller: _sandiKelasController,
                         obscureText: _obscureSandi,
                         decoration: InputDecoration(
-                          hintText: 'Sandi Kelas',
+                          hintText: 'Sandi Akun',
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
@@ -210,14 +265,36 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                             icon: Icon(_obscureSandi
                                 ? Icons.visibility_off
                                 : Icons.visibility),
-                            onPressed: () => setState(
-                                () => _obscureSandi = !_obscureSandi),
+                            onPressed: () =>
+                                setState(() => _obscureSandi = !_obscureSandi),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 28),
 
-                      // Tombol Buat
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEDF3FB),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline,
+                                size: 16, color: Color(0xFF4A90D9)),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Kode kelas otomatis dibuat setelah registrasi. Bagikan ke murid!',
+                                style: TextStyle(
+                                    fontSize: 12, color: Color(0xFF4A90D9)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 28),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -227,32 +304,22 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white)
-                              : const Text(
-                                  'Buat',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Buat',
+                                  style: TextStyle(fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
                         ),
                       ),
-
-                      // Tombol kembali
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
                         child: TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text(
-                            'Sudah punya kelas? Masuk',
-                            style: TextStyle(color: Color(0xFF4A90D9)),
-                          ),
+                          child: const Text('Sudah punya kelas? Masuk',
+                              style: TextStyle(color: Color(0xFF4A90D9))),
                         ),
                       ),
                     ],

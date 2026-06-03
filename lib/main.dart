@@ -16,7 +16,9 @@ import 'screens/guru/dashboard_guru.dart';
 import 'screens/guru/tambah_tugas_guru.dart';
 import 'screens/murid/profil_murid.dart';
 import 'screens/guru/profil_guru.dart';  // ← tambah ini
-
+import 'screens/murid/zoom_murid.dart';
+import 'screens/guru/zoom_guru.dart';
+import 'screens/zoom_webview.dart';
 
 
 Future<void> main() async {
@@ -67,6 +69,9 @@ class MyApp extends StatelessWidget {
         '/tambah-tugas': (context) => const TambahTugasGuru(),
         '/profil-murid': (context) => const ProfilMurid(),
         '/profil-guru': (context) => const ProfilGuru(),  // ← tambah ini
+        '/zoom-murid': (context) => const ZoomMurid(),
+        '/zoom-guru': (context) => const ZoomGuru(),
+        '/zoom-webview': (context) => const ZoomWebview(),
 
 
 

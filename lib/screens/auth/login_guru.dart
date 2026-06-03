@@ -124,7 +124,7 @@ class _LoginGuruState extends State<LoginGuru> {
                         controller: _sandiKelasController,
                         obscureText: _obscureSandiKelas,
                         decoration: InputDecoration(
-                          hintText: 'Sandi kelas',
+                          hintText: 'Sandi akun',
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
