@@ -132,16 +132,19 @@ class _DetailTugasMuridState extends State<DetailTugasMurid> {
                   itemBuilder: (context, index) {
                     final tugas = _listTugas[index];
                     return GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
+                      onTap: () async {
+                        await Navigator.pushNamed(
                           context,
                           '/submit-tugas-murid',
                           arguments: {
                             'tugas_id': tugas['id'],
                             'judul': tugas['judul'],
                             'status': tugas['status'],
+                            'deadline': tugas['deadline'] ?? '',
                           },
                         );
+                        // Refresh setelah kembali dari submit
+                        _loadTugas();
                       },
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),

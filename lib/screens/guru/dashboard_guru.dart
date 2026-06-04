@@ -72,7 +72,7 @@ class _DashboardGuruState extends State<DashboardGuru> {
               Navigator.pushReplacementNamed(context, '/dashboard-guru');
               break;
             case 1:
-              Navigator.pushReplacementNamed(context, '/tambah-tugas');
+              Navigator.pushReplacementNamed(context, '/tugas-guru');
               break;
             case 2:
               Navigator.pushReplacementNamed(context, '/zoom-guru');
@@ -170,7 +170,7 @@ class _DashboardGuruState extends State<DashboardGuru> {
                                 GestureDetector(
                                   onTap: () async {
                                     await Navigator.pushNamed(context, '/tambah-tugas');
-                                    _loadData(); // refresh setelah balik dari tambah tugas
+                                    _loadData();
                                   },
                                   child: _menuItem(Icons.menu_book_rounded, "Tambahkan\nTugas"),
                                 ),
@@ -237,7 +237,7 @@ class _DashboardGuruState extends State<DashboardGuru> {
                                 final isNew = index == 0;
                                 return GestureDetector(
                                   onTap: () => Navigator.pushNamed(
-                                      context, '/lihat-submissions'),
+                                      context, '/tugas-guru'),
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: Colors.white,

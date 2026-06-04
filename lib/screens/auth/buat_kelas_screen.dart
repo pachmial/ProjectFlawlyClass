@@ -49,7 +49,7 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
       if (authResponse.user == null) throw Exception('Gagal membuat akun');
       final userId = authResponse.user!.id;
 
-      // 2. Panggil SQL function
+      // 2. Panggil SQL function — semua insert dilakukan di sisi server, bypass RLS
       await supabase.rpc('buat_kelas_guru', params: {
         'p_user_id': userId,
         'p_nama': nama,
@@ -165,10 +165,12 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
     }
   }
 
+  // Generate kode kelas acak 6 karakter
   String _generateKodeKelas() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = DateTime.now().millisecondsSinceEpoch;
-    return List.generate(6, (i) => chars[(random + i * 7) % chars.length]).join();
+    return List.generate(6, (i) => chars[(random + i * 7) % chars.length])
+        .join();
   }
 
   @override
@@ -200,18 +202,25 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Buat Kelas',
-                          style: TextStyle(fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF333333))),
-                      const Text('Ayoo buat kelas anda',
-                          style: TextStyle(fontSize: 14, color: Colors.grey)),
+                      const Text(
+                        'Buat Kelas',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF333333),
+                        ),
+                      ),
+                      const Text(
+                        'Ayoo buat kelas anda',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
                       const SizedBox(height: 28),
 
+                      // Nama Guru
                       TextField(
                         controller: _namaGuruController,
                         decoration: InputDecoration(
-                          hintText: 'Nama ',
+                          hintText: 'Nama Guru',
                           filled: true,
                           fillColor: const Color(0xFFF5F5F5),
                           border: OutlineInputBorder(
@@ -222,6 +231,7 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Mata Pelajaran
                       TextField(
                         controller: _namaKelasController,
                         decoration: InputDecoration(
@@ -236,6 +246,7 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Nama Rombel/Kelas
                       TextField(
                         controller: _namaRombelController,
                         decoration: InputDecoration(
@@ -250,6 +261,7 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Sandi Kelas
                       TextField(
                         controller: _sandiKelasController,
                         obscureText: _obscureSandi,
@@ -265,8 +277,8 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                             icon: Icon(_obscureSandi
                                 ? Icons.visibility_off
                                 : Icons.visibility),
-                            onPressed: () =>
-                                setState(() => _obscureSandi = !_obscureSandi),
+                            onPressed: () => setState(
+                                () => _obscureSandi = !_obscureSandi),
                           ),
                         ),
                       ),
@@ -295,6 +307,8 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                       ),
 
                       const SizedBox(height: 28),
+
+                      // Tombol Buat
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -320,6 +334,19 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                           onPressed: () => Navigator.pop(context),
                           child: const Text('Sudah punya kelas? Masuk',
                               style: TextStyle(color: Color(0xFF4A90D9))),
+                        ),
+                      ),
+
+                      // Tombol kembali
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            'Sudah punya kelas? Masuk',
+                            style: TextStyle(color: Color(0xFF4A90D9)),
+                          ),
                         ),
                       ),
                     ],

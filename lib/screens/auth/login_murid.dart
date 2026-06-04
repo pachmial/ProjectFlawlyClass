@@ -86,9 +86,11 @@ class _LoginMuridState extends State<LoginMurid> {
         Navigator.pushReplacementNamed(context, '/dashboard-murid');
       }
     } on AuthException catch (e) {
+      // ignore: avoid_print
       print('AUTH ERROR: ${e.message} | code: ${e.statusCode}');
       _showSnackbar(e.message, Colors.red);
     } catch (e) {
+      // ignore: avoid_print
       print('OTHER ERROR: $e');
       if (mounted) _showSnackbar('NISN atau sandi salah!', Colors.red);
     }

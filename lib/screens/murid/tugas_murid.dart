@@ -46,13 +46,13 @@ class _TugasMuridState extends State<TugasMurid> {
 
       final mapelIds = (members as List).map((m) => m['mapel_id']).toList();
 
-      // Ambil detail mapel beserta nama guru
+      // Ambil detail mapel beserta guru_id
       final mapelData = await supabase
           .from('mata_pelajaran')
           .select('id, nama, guru_id')
           .inFilter('id', mapelIds);
 
-      // Ambil nama guru
+      // Ambil nama guru dari tabel users
       final guruIds =
           (mapelData as List).map((m) => m['guru_id']).toSet().toList();
 
