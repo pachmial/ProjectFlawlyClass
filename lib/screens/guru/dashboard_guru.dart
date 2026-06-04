@@ -25,14 +25,12 @@ class _DashboardGuruState extends State<DashboardGuru> {
       final supabase = Supabase.instance.client;
       final userId = supabase.auth.currentUser!.id;
 
-      // Ambil nama guru
       final userData = await supabase
           .from('users')
           .select('nama')
           .eq('id', userId)
           .single();
 
-      // Ambil tugas yang dibuat guru ini
       final tugasData = await supabase
           .from('tugas')
           .select('*, mata_pelajaran(nama)')
@@ -60,38 +58,75 @@ class _DashboardGuruState extends State<DashboardGuru> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xffA9C9FF),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-          switch (index) {
-            case 0:
-              Navigator.pushReplacementNamed(context, '/dashboard-guru');
-              break;
-            case 1:
-              Navigator.pushReplacementNamed(context, '/tugas-guru');
-              break;
-            case 2:
-              Navigator.pushReplacementNamed(context, '/zoom-guru');
-              break;
-            case 3:
-              Navigator.pushReplacementNamed(context, '/kalender-guru');
-              break;
-            case 4:
-              Navigator.pushReplacementNamed(context, '/profil-guru');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "Tugas"),
-          BottomNavigationBarItem(icon: Icon(Icons.video_call), label: "Flawly Zoom"),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Kalender"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          selectedItemColor: const Color(0xFF4A90D9),
+          unselectedItemColor: Colors.grey.shade400,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+          onTap: (index) {
+            setState(() => _currentIndex = index);
+            switch (index) {
+              case 0:
+                Navigator.pushReplacementNamed(context, '/dashboard-guru');
+                break;
+              case 1:
+                Navigator.pushReplacementNamed(context, '/tugas-guru');
+                break;
+              case 2:
+                Navigator.pushReplacementNamed(context, '/zoom-guru');
+                break;
+              case 3:
+                Navigator.pushReplacementNamed(context, '/kalender-guru');
+                break;
+              case 4:
+                Navigator.pushReplacementNamed(context, '/profil-guru');
+                break;
+            }
+          },
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home_rounded),
+              label: "Beranda",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.book_outlined),
+              activeIcon: Icon(Icons.book_rounded),
+              label: "Tugas Anda",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.videocam_outlined),
+              activeIcon: Icon(Icons.videocam_rounded),
+              label: "Flawly Zoom",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today_outlined),
+              activeIcon: Icon(Icons.calendar_month_rounded),
+              label: "Kalender",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              activeIcon: Icon(Icons.person_rounded),
+              label: "Akun",
+            ),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -129,7 +164,6 @@ class _DashboardGuruState extends State<DashboardGuru> {
                               ),
                             ],
                           ),
-                          // Avatar
                           CircleAvatar(
                             radius: 24,
                             backgroundColor: Colors.white,
@@ -175,13 +209,11 @@ class _DashboardGuruState extends State<DashboardGuru> {
                                   child: _menuItem(Icons.menu_book_rounded, "Tambahkan\nTugas"),
                                 ),
                                 GestureDetector(
-                                  onTap: () => Navigator.pushNamed(
-                                      context, '/kalender-guru'),
+                                  onTap: () => Navigator.pushNamed(context, '/kalender-guru'),
                                   child: _menuItem(Icons.calendar_month, "Kalender"),
                                 ),
                                 GestureDetector(
-                                  onTap: () => Navigator.pushNamed(
-                                      context, '/profil-guru'),
+                                  onTap: () => Navigator.pushNamed(context, '/profil-guru'),
                                   child: _menuItem(Icons.person, "Akun Anda"),
                                 ),
                               ],
@@ -202,7 +234,6 @@ class _DashboardGuruState extends State<DashboardGuru> {
                       ),
                       const SizedBox(height: 16),
 
-                      // LIST TUGAS
                       _tugasList.isEmpty
                           ? Container(
                               width: double.infinity,
@@ -273,17 +304,12 @@ class _DashboardGuruState extends State<DashboardGuru> {
                                             ),
                                             if (isNew)
                                               Container(
-                                                margin: const EdgeInsets.only(
-                                                    top: 4),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 2),
+                                                margin: const EdgeInsets.only(top: 4),
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8, vertical: 2),
                                                 decoration: BoxDecoration(
-                                                  color:
-                                                      const Color(0xFF4A90D9),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
+                                                  color: const Color(0xFF4A90D9),
+                                                  borderRadius: BorderRadius.circular(8),
                                                 ),
                                                 child: const Text(
                                                   'Baru ditambahkan',
