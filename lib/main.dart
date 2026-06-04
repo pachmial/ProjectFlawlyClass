@@ -15,9 +15,10 @@ import 'screens/auth/daftar_murid.dart';
 import 'screens/guru/dashboard_guru.dart';
 import 'screens/guru/tambah_tugas_guru.dart';
 import 'screens/murid/profil_murid.dart';
-import 'screens/guru/profil_guru.dart';  // ← tambah ini
-import 'screens/murid/zoom_murid.dart';
+import 'screens/guru/tugas_guru.dart';
+import 'screens/guru/profil_guru.dart';
 import 'screens/guru/zoom_guru.dart';
+import 'screens/murid/zoom_murid.dart';
 import 'screens/zoom_webview.dart';
 
 
@@ -65,19 +66,14 @@ class MyApp extends StatelessWidget {
         '/submit-tugas-murid': (context) => const SubmitTugasMurid(),
         '/kalender-murid': (context) => const KalenderMurid(),
         '/daftar-murid': (context) => const DaftarMurid(),
-        '/dashboard-guru': (context) => const DashboardGuru(), // ✅ ditambahkan
+        '/dashboard-guru': (context) => const DashboardGuru(),
         '/tambah-tugas': (context) => const TambahTugasGuru(),
         '/profil-murid': (context) => const ProfilMurid(),
-        '/profil-guru': (context) => const ProfilGuru(),  // ← tambah ini
-        '/zoom-murid': (context) => const ZoomMurid(),
+        '/tugas-guru': (context) => const TugasGuru(),
+        '/profil-guru': (context) => const ProfilGuru(),
         '/zoom-guru': (context) => const ZoomGuru(),
+        '/zoom-murid': (context) => const ZoomMurid(),
         '/zoom-webview': (context) => const ZoomWebview(),
-
-
-
-
-
-
       },
     );
   }

@@ -12,6 +12,22 @@ class _DashboardMuridState extends State<DashboardMurid> {
   String _namaMurid = '';
   List<Map<String, dynamic>> _mapel = [];
   bool _isLoading = true;
+  Color _getWarnaFromId(String id) {
+  const palette = [
+    Color(0xFFE57373), // merah
+    Color(0xFF4A90D9), // biru
+    Color(0xFFFFB74D), // orange
+    Color(0xFF81C784), // hijau
+    Color(0xFF9575CD), // ungu
+    Color(0xFF4DB6AC), // teal
+    Color(0xFFF06292), // pink
+    Color(0xFF26A69A), // dark teal
+    Color(0xFFFF7043), // deep orange
+    Color(0xFF7986CB), // indigo
+  ];
+  final hash = id.codeUnits.fold(0, (prev, e) => prev + e);
+  return palette[hash % palette.length];
+}
 
   @override
   void initState() {
@@ -64,6 +80,7 @@ class _DashboardMuridState extends State<DashboardMurid> {
     }
   }
 
+  // ignore: unused_element
   Color _parseWarna(String? hex) {
     if (hex == null || hex.isEmpty) return const Color(0xFF4A90D9);
     final clean = hex.replaceAll('#', '');
@@ -199,7 +216,7 @@ class _DashboardMuridState extends State<DashboardMurid> {
                           itemCount: _mapel.length,
                           itemBuilder: (context, index) {
                             final mapel = _mapel[index];
-                            final warna = _parseWarna(mapel['warna']);
+                            final warna = _getWarnaFromId(mapel['id']);
                             return GestureDetector(
                               onTap: () {
                                 Navigator.pushNamed(
@@ -304,7 +321,9 @@ class _DashboardMuridState extends State<DashboardMurid> {
               Navigator.pushReplacementNamed(context, '/kalender-murid');
               break;
             case 4:
-              Navigator.pushReplacementNamed(context, '/profil-murid');
+              Navigator.pushNamed(context, '/profil-murid').then((_) {
+                _ambilMapel(); // ganti dengan nama fungsi yang benar
+              });
               break;
           }
         },

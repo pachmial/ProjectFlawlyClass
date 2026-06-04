@@ -46,6 +46,7 @@ Future<void> _konfirmasi() async {
   try {
     final supabase = Supabase.instance.client;
     final userId = supabase.auth.currentUser!.id;
+    // ignore: avoid_print
     print('User ID yang login: $userId');
 
     // Ambil mapel_id dari mata_pelajaran berdasarkan guru_id
@@ -77,7 +78,7 @@ Future<void> _konfirmasi() async {
       Navigator.pop(context);
     }
   } catch (e) {
-    if (mounted) {
+    if (mounted) { 
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -102,7 +103,7 @@ Future<void> _konfirmasi() async {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => Navigator.pushReplacementNamed(context, '/dashboard-guru'),
                     child: Container(
                       width: 36,
                       height: 36,
