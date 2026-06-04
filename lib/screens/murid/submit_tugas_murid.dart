@@ -17,7 +17,6 @@ class _SubmitTugasMuridState extends State<SubmitTugasMurid> {
   String _status = 'Belum Dikerjakan';
   String _deadline = '';
 
-  // File yang dipilih
   PlatformFile? _selectedFile;
   String? _uploadedFotoUrl;
 
@@ -31,36 +30,35 @@ class _SubmitTugasMuridState extends State<SubmitTugasMurid> {
       _judulTugas = args['judul'] ?? '';
       _status = args['status'] ?? 'Belum Dikerjakan';
       _deadline = args['deadline'] ?? '';
-       _loadExistingSubmission();
+      _loadExistingSubmission();
     }
   }
 
-Future<void> _loadExistingSubmission() async {
-  if (_tugasId.isEmpty) return;
-  try {
-    final supabase = Supabase.instance.client;
-    final userId = supabase.auth.currentUser!.id;
+  Future<void> _loadExistingSubmission() async {
+    if (_tugasId.isEmpty) return;
+    try {
+      final supabase = Supabase.instance.client;
+      final userId = supabase.auth.currentUser!.id;
 
-    final data = await supabase
-        .from('submissions')
-        .select('tautan, foto_url')
-        .eq('tugas_id', _tugasId)
-        .eq('murid_id', userId)
-        .maybeSingle();
+      final data = await supabase
+          .from('submissions')
+          .select('tautan, foto_url')
+          .eq('tugas_id', _tugasId)
+          .eq('murid_id', userId)
+          .maybeSingle();
 
-    if (data != null && mounted) {
-      setState(() {
-        if (data['tautan'] != null) {
-          _tautanController.text = data['tautan'];
-        }
-        if (data['foto_url'] != null) {
-          _uploadedFotoUrl = data['foto_url'];
-        }
-      });
-    }
-  } catch (_) {}
-}
-
+      if (data != null && mounted) {
+        setState(() {
+          if (data['tautan'] != null) {
+            _tautanController.text = data['tautan'];
+          }
+          if (data['foto_url'] != null) {
+            _uploadedFotoUrl = data['foto_url'];
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   Future<void> _pilihFoto() async {
     final result = await FilePicker.platform.pickFiles(
@@ -115,7 +113,6 @@ Future<void> _loadExistingSubmission() async {
       final supabase = Supabase.instance.client;
       final userId = supabase.auth.currentUser!.id;
 
-      // Upload foto jika ada
       String? fotoUrl;
       if (adaFoto) {
         fotoUrl = await _uploadFoto();
@@ -217,10 +214,8 @@ Future<void> _loadExistingSubmission() async {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Tambahkan Tugasmu',
-                style:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            // Tambahkan Foto
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -238,8 +233,7 @@ Future<void> _loadExistingSubmission() async {
                 ),
                 label: Text(
                   _selectedFile != null
-                      // ignore: unnecessary_string_interpolations
-                      ? '${_selectedFile!.name}'
+                      ? _selectedFile!.name
                       : 'Tambahkan Foto',
                   style: TextStyle(
                     color: _selectedFile != null
@@ -261,7 +255,6 @@ Future<void> _loadExistingSubmission() async {
               ),
             ),
             const SizedBox(height: 12),
-            // Tambahkan Tautan
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -285,7 +278,6 @@ Future<void> _loadExistingSubmission() async {
               ),
             ),
             const SizedBox(height: 12),
-            // Kirim Tugasmu
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -295,8 +287,8 @@ Future<void> _loadExistingSubmission() async {
                 },
                 icon: const Icon(Icons.send),
                 label: const Text('Kirim Tugasmu',
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
+                    style:
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF4A90D9),
                   foregroundColor: Colors.white,
@@ -367,21 +359,10 @@ Future<void> _loadExistingSubmission() async {
                 child: const Text('+ Kirim Tautanmu'),
               ),
             ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengirim tugas: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+          ],
+        ),
+      ),
+    );
   }
 
   String _formatDeadline(String? deadline) {
@@ -394,14 +375,13 @@ Future<void> _loadExistingSubmission() async {
     }
   }
 
- bool get _sudahAda =>
-    _selectedFile != null ||
-    _tautanController.text.isNotEmpty ||
-    _uploadedFotoUrl != null; 
+  bool get _sudahAda =>
+      _selectedFile != null ||
+      _tautanController.text.isNotEmpty ||
+      _uploadedFotoUrl != null;
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: const Color(0xFF4A90D9),
       appBar: AppBar(
@@ -472,18 +452,17 @@ Future<void> _loadExistingSubmission() async {
                     const Divider(),
                     const SizedBox(height: 8),
                     if (_uploadedFotoUrl != null) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            _uploadedFotoUrl!,
-                            height: 150,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          _uploadedFotoUrl!,
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
                         ),
-                        const SizedBox(height: 8),
-                      ],
-                    // Preview foto
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     if (_selectedFile != null) ...[
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -552,7 +531,6 @@ Future<void> _loadExistingSubmission() async {
             ),
           ),
           const Spacer(),
-          // Tombol Tambahkan Tugasmu
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             child: SizedBox(
