@@ -12,22 +12,23 @@ class _DashboardMuridState extends State<DashboardMurid> {
   String _namaMurid = '';
   List<Map<String, dynamic>> _mapel = [];
   bool _isLoading = true;
+
   Color _getWarnaFromId(String id) {
-  const palette = [
-    Color(0xFFE57373), // merah
-    Color(0xFF4A90D9), // biru
-    Color(0xFFFFB74D), // orange
-    Color(0xFF81C784), // hijau
-    Color(0xFF9575CD), // ungu
-    Color(0xFF4DB6AC), // teal
-    Color(0xFFF06292), // pink
-    Color(0xFF26A69A), // dark teal
-    Color(0xFFFF7043), // deep orange
-    Color(0xFF7986CB), // indigo
-  ];
-  final hash = id.codeUnits.fold(0, (prev, e) => prev + e);
-  return palette[hash % palette.length];
-}
+    const palette = [
+      Color(0xFFE57373),
+      Color(0xFF4A90D9),
+      Color(0xFFFFB74D),
+      Color(0xFF81C784),
+      Color(0xFF9575CD),
+      Color(0xFF4DB6AC),
+      Color(0xFFF06292),
+      Color(0xFF26A69A),
+      Color(0xFFFF7043),
+      Color(0xFF7986CB),
+    ];
+    final hash = id.codeUnits.fold(0, (prev, e) => prev + e);
+    return palette[hash % palette.length];
+  }
 
   @override
   void initState() {
@@ -78,13 +79,6 @@ class _DashboardMuridState extends State<DashboardMurid> {
         _isLoading = false;
       });
     }
-  }
-
-  // ignore: unused_element
-  Color _parseWarna(String? hex) {
-    if (hex == null || hex.isEmpty) return const Color(0xFF4A90D9);
-    final clean = hex.replaceAll('#', '');
-    return Color(int.parse('FF$clean', radix: 16));
   }
 
   @override
@@ -236,27 +230,21 @@ class _DashboardMuridState extends State<DashboardMurid> {
                                 child: Stack(
                                   children: [
                                     Positioned(
-                                      top: -15,
-                                      right: -15,
+                                      top: -15, right: -15,
                                       child: Container(
-                                        width: 80,
-                                        height: 80,
+                                        width: 80, height: 80,
                                         decoration: BoxDecoration(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.15),
+                                          color: Colors.white.withValues(alpha: 0.15),
                                           shape: BoxShape.circle,
                                         ),
                                       ),
                                     ),
                                     Positioned(
-                                      bottom: -20,
-                                      right: 20,
+                                      bottom: -20, right: 20,
                                       child: Container(
-                                        width: 60,
-                                        height: 60,
+                                        width: 60, height: 60,
                                         decoration: BoxDecoration(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.1),
+                                          color: Colors.white.withValues(alpha: 0.1),
                                           shape: BoxShape.circle,
                                         ),
                                       ),
@@ -286,47 +274,76 @@ class _DashboardMuridState extends State<DashboardMurid> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF4A90D9),
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
-        currentIndex: 0,
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_rounded), label: 'Beranda'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.menu_book_rounded), label: 'Tugas Anda'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.video_call_rounded), label: 'Flawly Zoom'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_rounded), label: 'Kalender'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_rounded), label: 'Akun'),
-        ],
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.pushReplacementNamed(context, '/dashboard-murid');
-              break;
-            case 1:
-              Navigator.pushReplacementNamed(context, '/tugas-murid');
-              break;
-            case 2:
-              Navigator.pushReplacementNamed(context, '/zoom-murid');
-              break;
-            case 3:
-              Navigator.pushReplacementNamed(context, '/kalender-murid');
-              break;
-            case 4:
-              Navigator.pushNamed(context, '/profil-murid').then((_) {
-                _ambilMapel(); // ganti dengan nama fungsi yang benar
-              });
-              break;
-          }
-        },
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: const Color(0xFF4A90D9),
+          unselectedItemColor: Colors.grey.shade400,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          currentIndex: 0,
+          selectedFontSize: 11,
+          unselectedFontSize: 11,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home_rounded),
+              label: 'Beranda',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.book_outlined),
+              activeIcon: Icon(Icons.book_rounded),
+              label: 'Tugas Anda',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.videocam_outlined),
+              activeIcon: Icon(Icons.videocam_rounded),
+              label: 'Flawly Zoom',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today_outlined),
+              activeIcon: Icon(Icons.calendar_month_rounded),
+              label: 'Kalender',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              activeIcon: Icon(Icons.person_rounded),
+              label: 'Akun',
+            ),
+          ],
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                Navigator.pushReplacementNamed(context, '/dashboard-murid');
+                break;
+              case 1:
+                Navigator.pushReplacementNamed(context, '/tugas-murid');
+                break;
+              case 2:
+                Navigator.pushReplacementNamed(context, '/zoom-murid');
+                break;
+              case 3:
+                Navigator.pushReplacementNamed(context, '/kalender-murid');
+                break;
+              case 4:
+                Navigator.pushNamed(context, '/profil-murid').then((_) {
+                  _ambilMapel();
+                });
+                break;
+            }
+          },
+        ),
       ),
     );
   }

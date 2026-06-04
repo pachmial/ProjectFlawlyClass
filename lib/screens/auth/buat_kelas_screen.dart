@@ -338,17 +338,6 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                       ),
 
                       // Tombol kembali
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text(
-                            'Sudah punya kelas? Masuk',
-                            style: TextStyle(color: Color(0xFF4A90D9)),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),

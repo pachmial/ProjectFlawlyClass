@@ -9,65 +9,45 @@ class ZoomWebview extends StatefulWidget {
 }
 
 class _ZoomWebviewState extends State<ZoomWebview> {
-  String _link = '';
-  bool _sudahBuka = false;
+  bool _init = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_init) return;
+    _init = true;
+
     final args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-    _link = args['link'] ?? '';
+    final link = args['link'] ?? '';
 
-    // Langsung buka link di browser
-    if (!_sudahBuka && _link.isNotEmpty) {
-      _sudahBuka = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _bukaLink();
-      });
+    if (link.isNotEmpty) {
+      _bukaZoom(link);
     }
   }
 
-  Future<void> _bukaLink() async {
-    final uri = Uri.parse(_link);
+  Future<void> _bukaZoom(String link) async {
+    final uri = Uri.parse(link);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal membuka link zoom'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-    // Balik ke halaman sebelumnya setelah buka link
+    // Balik ke halaman sebelumnya setelah buka browser
     if (mounted) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFD6E4F7),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(color: Color(0xFF4A90D9)),
-            const SizedBox(height: 20),
-            const Text(
-              'Membuka Flawly Zoom...',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF1A2F5A),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Zoom akan terbuka di browser',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: _bukaLink,
-              child: const Text('Buka Manual'),
-            ),
-          ],
-        ),
-      ),
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }
