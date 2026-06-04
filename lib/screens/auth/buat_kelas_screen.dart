@@ -183,14 +183,9 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
             const SizedBox(height: 40),
             const Icon(Icons.school, size: 60, color: Colors.white),
             const SizedBox(height: 8),
-            const Text(
-              'Flawly Class',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const Text('Flawly Class',
+                style: TextStyle(color: Colors.white, fontSize: 22,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 32),
             Expanded(
               child: Container(
@@ -323,19 +318,22 @@ class _BuatKelasScreenState extends State<BuatKelasScreen> {
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                           child: _isLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white)
-                              : const Text(
-                                  'Buat',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                              ? const CircularProgressIndicator(color: Colors.white)
+                              : const Text('Buat',
+                                  style: TextStyle(fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Sudah punya kelas? Masuk',
+                              style: TextStyle(color: Color(0xFF4A90D9))),
                         ),
                       ),
 

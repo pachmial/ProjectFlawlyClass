@@ -57,6 +57,7 @@ dependencies:
 
   # Format tanggal
   intl: ^0.20.2
+  webview_flutter: ^4.13.1
 
 dev_dependencies:
   flutter_test:

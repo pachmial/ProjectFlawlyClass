@@ -367,10 +367,21 @@ Future<void> _loadExistingSubmission() async {
                 child: const Text('+ Kirim Tautanmu'),
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mengirim tugas: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   String _formatDeadline(String? deadline) {
